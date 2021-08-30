@@ -1,23 +1,19 @@
-FROM ubuntu
+# our base image
+FROM alpine:3.5
 
-ENV DEBIAN_FRONTEND=non-interactive
-# Install dependencies
-RUN apt-get update -y
-RUN apt-get install -y git curl apache2 php libapache2-mod-php php-mysql
+# Install python and pip
+RUN apk add --update py2-pip
 
-# Install app
-RUN rm -rf /var/www/html/*
-ADD src /var/www/html/
+# install Python modules needed by the Python app
+COPY requirements.txt /usr/src/app/
+RUN pip install --no-cache-dir -r /usr/src/app/requirements.txt
 
-# Configure apache
-RUN a2enmod rewrite
-RUN chown -R www-data:www-data /var/www/html
-ENV APACHE_RUN_DIR /var/www/html
-ENV APACHE_RUN_USER www-data
-ENV APACHE_RUN_GROUP www-data
-ENV APACHE_LOG_DIR /var/log/apache2
+# copy files required for the app to run
+COPY app.py /usr/src/app/
+COPY templates/index.html /usr/src/app/templates/
 
+# tell the port number the container should expose
+EXPOSE 5000
 
-EXPOSE 80
-
-CMD ["/usr/sbin/apache2", "-D",  "FOREGROUND"]
+# run the application
+CMD ["python", "/usr/src/app/app.py"]
